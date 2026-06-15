@@ -1,0 +1,56 @@
+# Python bytecode and caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+.venv-wsl/
+venv/
+env/
+ENV/
+
+# Environment and local config
+.env
+.env.*
+!.env.example
+*.local
+
+# Jupyter / notebooks
+.ipynb_checkpoints/
+
+# Dataset files
+data/
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.rar
+
+# Trained models and checkpoints
+models/
+checkpoints/
+*.keras
+*.h5
+*.hdf5
+*.tflite
+*.onnx
+*.pb
+
+# Generated outputs
+outputs/
+runs/
+logs/
+*.log
+
+# OS/editor files
+.DS_Store
+Thumbs.db
+Desktop.ini
+.vscode/
+.idea/
