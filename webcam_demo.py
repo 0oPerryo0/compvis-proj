@@ -1,5 +1,6 @@
 import argparse
 import json
+import platform
 import time
 from pathlib import Path
 
@@ -17,10 +18,24 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Run real-time webcam classification.")
     parser.add_argument("--model", default=str(MODEL_PATH), help="Path to trained .keras model.")
     parser.add_argument("--camera", type=int, default=0, help="Webcam index, usually 0.")
+    parser.add_argument(
+        "--backend",
+        choices=["auto", "dshow", "msmf"],
+        default="dshow" if platform.system() == "Windows" else "auto",
+        help="OpenCV camera backend. On Windows, dshow often works better with OBS than msmf.",
+    )
     parser.add_argument("--confidence", type=float, default=0.5, help="Minimum confidence to show a class.")
     parser.add_argument("--width", type=int, default=1280, help="Requested webcam width.")
     parser.add_argument("--height", type=int, default=720, help="Requested webcam height.")
     return parser.parse_args()
+
+
+def backend_id(name):
+    if name == "dshow":
+        return cv2.CAP_DSHOW
+    if name == "msmf":
+        return cv2.CAP_MSMF
+    return cv2.CAP_ANY
 
 
 def load_class_names():
@@ -55,12 +70,15 @@ def main():
     model = tf.keras.models.load_model(args.model)
     class_names = load_class_names()
 
-    camera = cv2.VideoCapture(args.camera)
+    camera = cv2.VideoCapture(args.camera, backend_id(args.backend))
     camera.set(cv2.CAP_PROP_FRAME_WIDTH, args.width)
     camera.set(cv2.CAP_PROP_FRAME_HEIGHT, args.height)
 
     if not camera.isOpened():
-        raise RuntimeError(f"Could not open webcam index {args.camera}. Try --camera 1.")
+        raise RuntimeError(
+            f"Could not open webcam index {args.camera} with backend {args.backend}. "
+            "Try --camera 1, --camera 2, or --backend auto."
+        )
 
     fps = 0.0
     previous_time = time.time()
@@ -68,7 +86,11 @@ def main():
     while True:
         ok, frame = camera.read()
         if not ok:
-            break
+            raise RuntimeError(
+                "Webcam opened but no frame could be read. "
+                "If OBS is running, select OBS Virtual Camera with --camera 1/2, "
+                "or release the physical webcam from OBS."
+            )
 
         batch = prepare_frame(frame)
         probabilities = model.predict(batch, verbose=0)[0]
